@@ -53,7 +53,7 @@ flowchart LR
 |---|---|---|
 | Java unit and integration | redaction rules, encryption, webhook signature, lockout, and the whole API called with real tokens (wrong role, no token, forged token, expired token, missing reason, bad signature, replay) | 71 |
 | Angular unit | guards, interceptors, services, every page, the reveal dialog, the route resolver | 126 |
-| Browser end to end | a real Chromium walks login, filtering, masked reading, the reveal dialog, the audit trail and the phone layout at 390 px | 37 checks |
+| Browser end to end | a real Chromium walks login, filtering, masked reading, the reveal dialog, the audit trail and the phone layout at 390 px | 39 checks |
 | **Mutation check** | `scripts/mutation_check.py` breaks one guard at a time (reveal no longer admin-only, audit not written, signature not checked, token sent to any origin, ...) and requires a genuine test failure each time | 28 of 28 caught |
 
 The mutation check found two weak tests while this was being built (a cache-header assertion that Spring Security's default satisfied on its
@@ -93,7 +93,7 @@ The default profile uses demo secrets so it runs after a fresh clone. The `prod`
 api/                       Spring Boot 4 (Java 21): calls, audit, auth, ingest, redaction, crypto, security, seed
   src/test/                71 tests; ApiSecurityTest and IngestApiTest call the real API as the wrong role
 web/                       Angular 22: core (auth, interceptors, guards, services), shell, features (login, calls, audit), shared
-  tests/e2e.cjs            Playwright walkthrough (37 checks)
+  tests/e2e.cjs            Playwright walkthrough (39 checks)
 scripts/                   mutation_check.py, send_webhook.py
 demo/record.mjs            records the walkthrough that became docs/demo.gif
 docs/DECISIONS.md          what was chosen, why, and what it costs
