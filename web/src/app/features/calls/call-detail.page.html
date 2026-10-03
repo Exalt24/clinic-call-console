@@ -1,0 +1,112 @@
+@let s = summary();
+
+<a class="back" routerLink="/calls"><app-icon name="back" /> Back to calls</a>
+
+<header class="head card">
+  <div class="title">
+    <h1>{{ s.callerLabel }}</h1>
+    <p class="muted">
+      {{ reasonLabel[s.reason] }} call · {{ s.startedAt | date: 'EEE, MMM d, h:mm a' }} · {{ duration(s.durationSec) }} · {{ s.agent }}
+    </p>
+  </div>
+  <div class="chips">
+    <span [class]="statusClass(s.status)">{{ statusLabel[s.status] }}</span>
+    <span class="chip" [class.chip-bad]="s.outcome === 'UNRESOLVED'">{{ outcomeLabel[s.outcome] }}</span>
+    @if (s.flagged) {
+      <span class="chip chip-bad"><app-icon name="flag" /> Flagged for a closer look</span>
+    }
+  </div>
+</header>
+
+<!-- Announces changes (status, reveal, hide) to screen readers without moving focus -->
+<p class="sr-only" role="status" aria-live="polite">{{ announce() }}</p>
+
+<div class="grid">
+  <section class="card transcript" aria-labelledby="t-title">
+    <div class="t-head">
+      <h2 id="t-title">Transcript</h2>
+      @if (revealed()) {
+        <span class="chip chip-bad"><app-icon name="eye" /> Unmasked</span>
+      } @else {
+        <span class="chip mask-chip"><app-icon name="shield" /> Masked</span>
+      }
+    </div>
+
+    @if (revealed(); as r) {
+      <div class="reveal-banner" role="status">
+        <app-icon name="eye" />
+        <p>
+          You are viewing unmasked details for <strong>{{ r.patientName }}</strong>. This access was recorded in the audit trail.
+          It hides again after {{ visibleSeconds }} seconds.
+        </p>
+        <button type="button" class="btn btn-sm" (click)="hide()">Hide now</button>
+      </div>
+    }
+
+    <ol class="bubbles" aria-label="Conversation">
+      @for (line of lines(); track $index) {
+        <li class="bubble" [class.caller]="line.speaker === 'CALLER'">
+          <span class="who">{{ speaker(line.speaker) }}</span>
+          <p>
+            @if (revealed()) {
+              {{ line.text }}
+            } @else {
+              <app-redacted-text [text]="line.text" />
+            }
+          </p>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <aside class="side">
+    <section class="card pad" aria-labelledby="review-title">
+      <h2 id="review-title">Review</h2>
+      <p class="muted small">Move this call along when you have looked at it.</p>
+      <div class="stack">
+        @for (a of actions(); track a.to) {
+          <button type="button" class="btn" [class.btn-primary]="a.primary" [disabled]="pending()" (click)="changeStatus(a.to)">
+            @if (a.to === 'RESOLVED') { <app-icon name="check" /> }
+            {{ a.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="card pad" aria-labelledby="phi-title">
+      <h2 id="phi-title">Protected details</h2>
+      @if (phiTotal() === 0) {
+        <p class="muted small">Nothing in this call needed masking.</p>
+      } @else {
+        <p class="muted small">{{ phiTotal() }} {{ phiTotal() === 1 ? 'detail was' : 'details were' }} masked before this call reached you.</p>
+        <ul class="phi">
+          @for (p of phi(); track p.kind) {
+            <li><span>{{ label(p.kind) }}</span><strong>{{ p.count }}</strong></li>
+          }
+        </ul>
+      }
+
+      @if (auth.isAdmin()) {
+        <button type="button" class="btn btn-danger full" (click)="openReveal()" [disabled]="revealed() !== null" data-test="reveal">
+          <app-icon name="eye" /> Reveal details…
+        </button>
+        <p class="hint">You will be asked for a reason. It is recorded with your name and the time.</p>
+      } @else {
+        <div class="locked">
+          <app-icon name="lock" />
+          <p class="small">Only administrators can reveal masked details. If you need them for this call, ask an administrator.</p>
+        </div>
+      }
+
+      <button #legendBtn type="button" class="btn btn-ghost btn-sm legend-btn"><app-icon name="info" /> What do the tags mean?</button>
+      @defer (on interaction(legendBtn)) {
+        <p class="small muted legend">
+          Each tag replaces something that could identify a patient: a phone number, a birth date, an email, a record or insurance
+          number, an address, or a name. Appointment times are left visible so you can judge the call.
+        </p>
+      } @placeholder {
+        <span class="sr-only">Legend loads when you press the button.</span>
+      }
+    </section>
+  </aside>
+</div>

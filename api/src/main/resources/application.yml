@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: clinic-call-console-api
+  datasource:
+    # In-memory H2 in PostgreSQL mode: the schema is real Flyway SQL, the data is synthetic and reseeded at startup.
+    url: jdbc:h2:mem:clinic;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  # DEMO VALUES ONLY. They exist so the project runs after a fresh clone. The `prod` profile (application-prod.yml)
+  # refuses to start without real values from the environment.
+  jwt:
+    secret: ${JWT_SECRET:demo-only-signing-secret-change-me-0123456789abcdef}
+    ttl-minutes: 30
+  crypto:
+    key: ${FIELD_KEY:ZGVtby1vbmx5LWZpZWxkLWtleS0zMi1ieXRlcyEhISE=}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://127.0.0.1:4200}
+  demo-users:
+    reviewer-password: ${REVIEWER_PASSWORD:reviewer-demo-pass}
+    admin-password: ${ADMIN_PASSWORD:admin-demo-pass}
+  ingest:
+    webhook-secret: ${WEBHOOK_SECRET:demo-only-webhook-secret-change-me}
+    tolerance-seconds: 300
+  seed:
+    enabled: true
+    count: 36
+  login:
+    max-failures: 5
+    window-minutes: 10

@@ -1,0 +1,12 @@
+node_modules/
+target/
+dist/
+.angular/
+*.log
+.DS_Store
+
+# local recordings and screenshots made while developing
+demo/work/
+web/tests/shots/
+**/.env
+**/.env.*

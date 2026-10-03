@@ -1,0 +1,121 @@
+@let v = view();
+
+<header class="head">
+  <div>
+    <h1>Calls to review</h1>
+    <p class="muted sub" aria-live="polite">
+      @if (v.kind === 'ok') {
+        {{ summaryLine(v.page) }}
+      } @else {
+        Patient details are masked in every call below.
+      }
+    </p>
+  </div>
+</header>
+
+<section class="tools" aria-label="Filter calls">
+  <div class="chips" role="radiogroup" aria-label="Status">
+    @for (f of filters; track f.label) {
+      <button type="button" role="radio" class="pill" [class.on]="query().status === f.value"
+        [attr.aria-checked]="query().status === f.value" (click)="setStatus(f.value)">
+        {{ f.label }}
+      </button>
+    }
+  </div>
+  <div class="searchbox">
+    <app-icon name="search" />
+    <label for="q" class="sr-only">Search calls</label>
+    <input id="q" class="input" type="search" placeholder="Search calls" autocomplete="off" [formControl]="search" />
+  </div>
+</section>
+
+@if (v.kind === 'loading') {
+  <div class="card list" aria-busy="true" aria-label="Loading calls">
+    @for (n of skeleton; track n) {
+      <div class="skel-row"><span class="skel w1"></span><span class="skel w2"></span><span class="skel w3"></span></div>
+    }
+  </div>
+} @else if (v.kind === 'error') {
+  <div class="card state" role="alert">
+    <h2>We could not load the calls</h2>
+    <p class="muted">The server did not answer. Your work is safe; try again.</p>
+    <button type="button" class="btn btn-primary" (click)="retry()">Try again</button>
+  </div>
+} @else if (v.page.content.length === 0) {
+  <div class="card state">
+    <h2>{{ hasFilters() ? 'No calls match' : 'No calls yet' }}</h2>
+    <p class="muted">
+      {{ hasFilters() ? 'Try a different search or clear the filters.' : 'New calls from the voice assistant appear here.' }}
+    </p>
+    @if (hasFilters()) {
+      <button type="button" class="btn" (click)="clearFilters()">Clear filters</button>
+    }
+  </div>
+} @else {
+  <!-- Desktop: a real table -->
+  <div class="card tablewrap">
+    <table class="table">
+      <caption class="sr-only">Calls, newest first</caption>
+      <thead>
+        <tr>
+          <th scope="col">Caller</th>
+          <th scope="col">When</th>
+          <th scope="col">About</th>
+          <th scope="col">Outcome</th>
+          <th scope="col">Protected details</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of v.page.content; track c.id) {
+          <tr>
+            <td>
+              <a class="rowlink" [routerLink]="['/calls', c.id]">{{ c.callerLabel }}</a>
+              <div class="sub2">{{ c.agent }} · {{ duration(c.durationSec) }}</div>
+            </td>
+            <td class="nowrap">{{ c.startedAt | date: 'MMM d, h:mm a' }}</td>
+            <td>{{ reasonLabel[c.reason] }}</td>
+            <td>
+              <span [class]="outcomeClass(c)">{{ outcomeLabel[c.outcome] }}</span>
+              @if (c.flagged) {
+                <span class="flag" title="Flagged for a closer look"><app-icon name="flag" /><span class="sr-only">Flagged</span></span>
+              }
+            </td>
+            <td class="nowrap"><span class="shield"><app-icon name="shield" /> {{ c.phiCount }} masked</span></td>
+            <td><span [class]="statusClass(c.status)">{{ statusLabel[c.status] }}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Phone: one card per call -->
+  <ul class="cards" aria-label="Calls">
+    @for (c of v.page.content; track c.id) {
+      <li>
+        <a class="card callcard" [routerLink]="['/calls', c.id]">
+          <div class="line1">
+            <strong>{{ c.callerLabel }}</strong>
+            <span [class]="statusClass(c.status)">{{ statusLabel[c.status] }}</span>
+          </div>
+          <div class="line2">{{ reasonLabel[c.reason] }} · {{ c.startedAt | date: 'MMM d, h:mm a' }}</div>
+          <div class="line3">
+            <span [class]="outcomeClass(c)">{{ outcomeLabel[c.outcome] }}</span>
+            @if (c.flagged) {
+              <span class="chip chip-bad"><app-icon name="flag" /> Flagged</span>
+            }
+            <span class="shield"><app-icon name="shield" /> {{ c.phiCount }} masked</span>
+          </div>
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (v.page.totalPages > 1) {
+    <nav class="pager" aria-label="Pages">
+      <button type="button" class="btn btn-sm" [disabled]="v.page.page === 0" (click)="goTo(v.page.page - 1)">Previous</button>
+      <span class="muted">Page {{ v.page.page + 1 }} of {{ v.page.totalPages }}</span>
+      <button type="button" class="btn btn-sm" [disabled]="v.page.page + 1 >= v.page.totalPages" (click)="goTo(v.page.page + 1)">Next</button>
+    </nav>
+  }
+}

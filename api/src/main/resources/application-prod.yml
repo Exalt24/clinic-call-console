@@ -1,0 +1,14 @@
+# Production-shaped profile: no defaults for anything secret, so a missing variable stops the boot instead of
+# silently falling back to a demo value that is public in the repository.
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  crypto:
+    key: ${FIELD_KEY}
+  cors:
+    allowed-origins: ${CORS_ORIGINS}
+  ingest:
+    webhook-secret: ${WEBHOOK_SECRET}
+  demo-users:
+    reviewer-password: ${REVIEWER_PASSWORD}
+    admin-password: ${ADMIN_PASSWORD}
