@@ -17,3 +17,10 @@ cp vercel.json "$OUT/vercel.json"
 cd "$OUT"
 export VERCEL_TOKEN="$(tr -d '\r\n ' < "$TOKEN_FILE")"
 npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN" --name clinic-call-console 2>&1 | tail -8
+
+# A deploy is not done until the live domain serves the app: a Git-linked Vercel project deploys the repo root on every push and takes the production alias over with a 404.
+for path in "" login config.json; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://clinic-call-console.vercel.app/$path")
+  [ "$code" = "200" ] || { echo "LIVE CHECK FAILED: /$path returned $code (is the project Git-linked again?)"; exit 1; }
+done
+echo "live check ok"
