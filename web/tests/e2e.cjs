@@ -32,6 +32,13 @@ async function signIn(page, who) {
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
   page.on('pageerror', (e) => consoleErrors.push('pageerror ' + e.message));
 
+  console.log('deep links');
+  // A bookmarked or refreshed deep link must reach the app, not a host 404 (the first Vercel deploy returned 404 for every route).
+  const deep = await page.goto(WEB + '/calls/00000000-0000-0000-0000-000000000000', { waitUntil: 'domcontentloaded' });
+  check('a deep link is served by the app, not a 404', deep.status() === 200, String(deep.status()));
+  await page.waitForURL('**/login**', { timeout: 15000 });
+  check('and a signed-out visitor is sent to sign in, remembering where they were going', page.url().includes('next=%2Fcalls%2F'));
+
   console.log('login');
   await page.goto(WEB + '/login', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('h1');
@@ -52,7 +59,8 @@ async function signIn(page, who) {
   await signIn(page, 'reviewer');
   check('reviewer lands on the queue', page.url().endsWith('/calls'));
   const summary = (await page.textContent('p.sub')).trim();
-  check('queue reports the total', /of 36 calls/.test(summary), summary);
+  // 36 seeded calls, plus any a signed webhook delivered since (the live demo has received at least one)
+  check('queue reports the total', /of (3[6-9]|[4-9]\d) calls/.test(summary), summary);
   check('first page has 10 rows', (await page.locator('table tbody tr').count()) === 10);
   check('reviewer sees no Audit link in the sidebar', (await page.locator('aside a', { hasText: 'Audit trail' }).count()) === 0);
   const bodyText = await page.textContent('body');
