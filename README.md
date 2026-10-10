@@ -18,8 +18,7 @@ of protected health information, and the people reviewing them should see as lit
 > certification. It shows HIPAA-minded engineering: least privilege, auditability, minimum necessary access, no PHI in logs.
 > Limits are listed [below](#limits) and in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
-**Live demo:** [clinic-call-console.vercel.app](https://clinic-call-console.vercel.app) (API: [clinic-call-console-api.onrender.com](https://clinic-call-console-api.onrender.com/actuator/health)). The API runs on free hosting that sleeps when idle, so the first visit can take a minute;
-the login page says so while it waits.
+**Live demo:** [clinic-call-console.vercel.app](https://clinic-call-console.vercel.app) (API: [clinic-call-console-api.onrender.com](https://clinic-call-console-api.onrender.com/actuator/health)). **The hosted API is currently suspended** (the free host paused it on 2026-10-09 for billing), so the live link shows the sign-in page and nothing past it. The recording above is the real run, and [Run it](#run-it) starts the whole stack locally.
 Demo accounts (public on purpose, the data is invented): `reviewer@demo.test` / `reviewer-demo-pass` and `admin@demo.test` / `admin-demo-pass`.
 
 ## How it fits together

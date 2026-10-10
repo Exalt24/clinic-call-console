@@ -19,4 +19,7 @@ jobs:
           API_URL: ${{ vars.DEMO_API_URL }}
         run: |
           if [ -z "$API_URL" ]; then echo "DEMO_API_URL is not set, nothing to ping"; exit 0; fi
-          curl -s -o /dev/null -w "health %{http_code}\n" --max-time 120 "$API_URL/actuator/health" || true
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 "$API_URL/actuator/health" || echo 000)
+          echo "health $code"
+          # a run that cannot reach a healthy API is RED, so GitHub emails the owner: with "|| true" a suspended API showed as a green run for weeks
+          [ "$code" = "200" ] || { echo "the demo API is not healthy"; exit 1; }
