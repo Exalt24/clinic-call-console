@@ -10,3 +10,6 @@ demo/work/
 web/tests/shots/
 **/.env
 **/.env.*
+
+# secrets written by scripts/deploy_render.py
+*.secrets.txt

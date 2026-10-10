@@ -2,7 +2,7 @@
 
     python scripts/deploy_render.py <web_origin>        e.g. https://clinic-call-console.vercel.app
 
-Reads the Render API token from RENDER_TOKEN_FILE (default: the workspace's Operations/.secrets/render_token.txt), generates a
+Reads the Render API token from RENDER_TOKEN_FILE (required), generates a
 signing secret, a field-encryption key and a webhook secret, stores them in SECRETS_OUT (never in the repo), and creates a
 Docker web service on the free plan rooted at api/. The two demo passwords are the same public values the login page offers,
 because the data is invented and the demo is meant to be tried.
@@ -15,9 +15,16 @@ import sys
 import urllib.error
 import urllib.request
 
-TOKEN_FILE = os.environ.get("RENDER_TOKEN_FILE", r"C:\Projects\Professional\Operations\.secrets\render_token.txt")
-SECRETS_OUT = os.environ.get("SECRETS_OUT", r"C:\Projects\Professional\Operations\.secrets\clinic_call_console.txt")
-OWNER = os.environ.get("RENDER_OWNER", "tea-cspptat6l47c738glfn0")
+def _need(name):
+    value = os.environ.get(name)
+    if not value:
+        sys.exit("set %s before running this script (see the docstring): there is no default, so nothing of mine is baked into the repo" % name)
+    return value
+
+
+TOKEN_FILE = _need("RENDER_TOKEN_FILE")                                          # a file holding your Render API key
+SECRETS_OUT = os.environ.get("SECRETS_OUT", "clinic_call_console.secrets.txt")   # where the generated secrets are written (keep it out of git)
+OWNER = _need("RENDER_OWNER")                                                    # your Render owner id (tea-... for a team, usr-... for a user)
 NAME = "clinic-call-console-api"
 REPO = "https://github.com/Exalt24/clinic-call-console"
 
