@@ -3,3 +3,6 @@
 *.png binary
 *.gif binary
 *.mp4 binary
+# Shell scripts must be LF on every machine: core.autocrlf=true checks them out as CRLF and bash cannot run them (2026-10-13).
+*.sh text eol=lf
+*.bash text eol=lf
