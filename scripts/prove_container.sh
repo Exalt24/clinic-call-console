@@ -38,7 +38,7 @@ for i in $(seq 1 60); do
 done
 say "   health: $code"; [ "$code" = "200" ] || fail=1
 user=$(docker exec ccc-secret id -un)
-say "   runs as: $user"; [ "$user" != "root" ] || { say "   FAIL: running as root"; fail=1; }
+say "   runs as: $user"; [ "$user" != "root" ] || { say "   FAIL: running as root"; fail=1; }  # authoring-ok: asserts the container is NOT root (a security test), it does not pick a role by username
 tok=$(curl -s -X POST "http://127.0.0.1:$PORT/api/auth/login" -H 'Content-Type: application/json' \
   -d '{"username":"admin@demo.test","password":"admin-proof-pw"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
 [ -n "$tok" ] && say "   login with the env password: ok" || { say "   FAIL: login"; fail=1; }
