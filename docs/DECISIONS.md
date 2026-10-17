@@ -16,16 +16,16 @@ makes the safe path the default path.
 ## 2. Rule-based redaction, with its limits written down
 
 `PhiRedactor` is a list of named patterns (phone, SSN, email, birth date, record number, insurance ID, address, introduced
-or titled names, and the patient's own name wherever it appears). Every mask can be explained: this pattern matched this
+or titled names, and the caller's own name wherever it appears). Every mask can be explained: this pattern matched this
 text.
 
-*Why:* explainable beats clever in a compliance setting, and it needs no external service for a demo.
+*Why:* explainable beats clever when the output decides what a reviewer may see, and it needs no external service for a demo.
 *Limits:* it does not catch a name the caller never introduces, and it leaves appointment dates visible so a reviewer can
-judge the call. A production system would use a certified de-identification service and the full HIPAA Safe Harbor list.
+judge the call. A production system would use a dedicated de-identification service.
 
 ## 3. Encrypt the sensitive columns in the application
 
-The patient name and the raw transcript are stored as AES-256-GCM ciphertext with a random IV per value (`FieldCipher`).
+The caller's name (`patientName` in the code) and the raw transcript are stored as AES-256-GCM ciphertext with a random IV per value (`FieldCipher`).
 A test reads the database columns and proves no readable name appears in them.
 
 *Why:* a database dump or a backup does not leak transcripts.
@@ -74,5 +74,5 @@ at any API with no rebuild.
   short-lived ticket, because the browser's `EventSource` cannot send an Authorization header.
 - **No database beyond in-memory H2.** The schema is real Flyway SQL in PostgreSQL mode and the data is synthetic and reseeded
   at startup. Moving to PostgreSQL is a connection string, not a rewrite.
-- **No real patients, no BAA, no certification.** This is a demonstration of HIPAA-minded engineering (least privilege,
-  auditability, minimum necessary access, no PHI in logs), not a HIPAA-compliant system.
+- **No real callers and no certification.** This is a demonstration of sensitive-data handling (least privilege,
+  auditability, minimum necessary access, no personal details in logs) on synthetic data.
