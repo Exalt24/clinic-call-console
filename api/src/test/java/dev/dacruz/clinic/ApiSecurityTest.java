@@ -167,10 +167,23 @@ class ApiSecurityTest extends ApiTestSupport {
     void theDatabaseColumnsHoldNoReadablePatientDataAndEveryRowStillDecrypts() {
         for (CallRecord c : calls.findAll()) {
             String name = cipher.decrypt(c.getPatientNameEnc());
-            assertThat(c.getPatientNameEnc()).doesNotContainIgnoringCase(name.split(" ")[0]);
-            assertThat(c.getRawTranscriptEnc()).doesNotContain("555-01").doesNotContainIgnoringCase(name.split(" ")[0]);
+            String first = name.split(" ")[0];
+            assertThat(storedBytesAsText(c.getPatientNameEnc())).doesNotContainIgnoringCase(first);
+            assertThat(storedBytesAsText(c.getRawTranscriptEnc())).doesNotContain("555-01").doesNotContainIgnoringCase(first);
             assertThat(cipher.decrypt(c.getRawTranscriptEnc())).contains(name.split(" ")[0]);
         }
+    }
+
+    /** The stored field is Base64 of random bytes. Searching that Base64 TEXT for a short name ("Wei") finds it by chance now and then, which made the test above flaky;
+     *  "no readable plaintext" means the decoded bytes hold no name, so that is what is searched. */
+    private static String storedBytesAsText(String stored) {
+        return new String(java.util.Base64.getDecoder().decode(stored), java.nio.charset.StandardCharsets.ISO_8859_1);
+    }
+
+    @Test
+    void theDecodedBytesCheckStillFindsPlaintextThatIsOnlyBase64Encoded() {
+        String merelyEncoded = java.util.Base64.getEncoder().encodeToString("Wei Zhang, 555-0142".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThat(storedBytesAsText(merelyEncoded)).containsIgnoringCase("Wei").contains("555-01");
     }
 
     @Test
