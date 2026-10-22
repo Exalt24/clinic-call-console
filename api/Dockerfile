@@ -1,6 +1,6 @@
 # Two stages so the runtime image carries a JRE and a jar, not Maven and a ~/.m2 cache. Dependencies are resolved in their
 # own layer first, so a source change does not re-download the world on every deploy.
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /build
 
 COPY pom.xml .
