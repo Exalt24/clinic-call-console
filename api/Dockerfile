@@ -10,7 +10,7 @@ COPY src ./src
 # The suite is the gate BEFORE the image is built (CI runs it), so the image build skips it to stay fast and deterministic.
 RUN mvn -B -q clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 WORKDIR /app
 
 # Never run as root in a container that faces the internet.
