@@ -4,7 +4,7 @@
 
 Voice-agent call review console: personal details masked by default, revealed only with a reason, every access audited.
 
-**Proof:** from a fresh clone on 2026-10-17, 71 Java tests and 126 Angular tests pass, and `scripts/mutation_check.py` broke 28 guards one at a time and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). CI runs the two test suites; the mutation check is not part of it.
+**Proof:** from a fresh clone on 2026-10-17, 72 Java tests and 126 Angular tests pass, and `scripts/mutation_check.py` broke 28 guards one at a time and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). CI runs the two test suites; the mutation check is not part of it.
 
 ![The console through a masked call, a reveal that needs a reason, and the audit trail it leaves](docs/demo.gif)
 
@@ -17,7 +17,7 @@ and the people reviewing them should see as little of it as their job allows.
   received, and every screen shows only the masked copy.
 - **Reveal on purpose.** Only an administrator can reveal a call, must give a reason, and the reveal and the reason are written to the audit
   trail in the same database transaction. The revealed text hides itself again after 60 seconds.
-- **Everything is on the record.** Sign-ins (including failed ones), opened calls, status changes, reveals and incoming calls are listed in
+- **Everything is on the record.** Sign-ins (failed ones too, until an account locks; attempts during a lockout are refused before they are recorded), opened calls, status changes, reveals and incoming calls are listed in
   an admin-only audit trail.
 
 > **This is a demonstration on synthetic data.** No real callers, no certification. It shows sensitive-data handling: least privilege,
@@ -37,7 +37,7 @@ flowchart LR
     redact --> enc["FieldCipher<br/>AES-256-GCM"]
     enc --> db[("calls<br/>(masked copy + encrypted original)")]
     rest["REST + JWT<br/>roles: REVIEWER, ADMIN"] --> db
-    rest --> audit[("audit_event<br/>append-only")]
+    rest --> audit[("audit_event<br/>insert-only by convention")]
   end
   ng["Angular 22 app<br/>signals, lazy routes, CDK dialog"] -- "Bearer token" --> rest
 ```
@@ -60,9 +60,9 @@ own, and a mutant that did not change behaviour), and an end-to-end run found a 
 pinned by a test.
 
 ```
-cd api && ./mvnw test                      # 71 tests, no Docker needed
+cd api && ./mvnw test                      # 72 tests, no Docker needed
 cd web && npx ng test --watch=false        # 126 tests (Vitest)
-python scripts/mutation_check.py           # breaks 28 guards one at a time
+python scripts/mutation_check.py           # breaks 28 guards one at a time; edits source files in place, so run it in a copy
 node web/tests/e2e.cjs <shots-dir>         # needs the API on :8080 and the web app on :4200
 ```
 
@@ -90,7 +90,7 @@ The default profile uses demo secrets so it runs after a fresh clone. The `prod`
 
 ```
 api/                       Spring Boot 4 (Java 21): calls, audit, auth, ingest, redaction, crypto, security, seed
-  src/test/                71 tests; ApiSecurityTest and IngestApiTest call the real API as the wrong role
+  src/test/                72 tests; ApiSecurityTest and IngestApiTest call the real API as the wrong role
 web/                       Angular 22: core (auth, interceptors, guards, services), shell, features (login, calls, audit), shared
   tests/e2e.cjs            Playwright walkthrough (39 checks)
 scripts/                   mutation_check.py, send_webhook.py
