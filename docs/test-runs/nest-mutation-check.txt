@@ -1,0 +1,94 @@
+NestJS API mutation check, two parts run one after the other against the local PostgreSQL container (python scripts/mutation_check.py --part 1/2 and --part 2/2)
+
+baseline: running the unmutated suite (41 mutations in total, 21 in this run)
+  Tests:       137 passed, 137 total
+ 1. CAUGHT   authentication guard is no longer global
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > answers 400 for no body and writes nothing
+ 2. CAUGHT   role guard is no longer global
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs the admin role > refuses a reviewer with 403, returns nothing readable and writes no audit row
+ 3. CAUGHT   reveal is no longer admin-only
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs the admin role > refuses a reviewer with 403, returns nothing readable and writes no audit row
+ 4. CAUGHT   the audit trail is no longer admin-only
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the audit trail itself > is closed to a reviewer
+ 5. CAUGHT   the role guard lets every role through
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs the admin role > refuses a reviewer with 403, returns nothing readable and writes no audit row
+ 6. CAUGHT   a token with an unknown role is accepted
+        first failing test: sign-in and tokens (real PostgreSQL) > every protected route > answers 401 for a correctly signed token with an unknown role
+ 7. CAUGHT   an expired token is accepted
+        first failing test: sign-in and tokens (real PostgreSQL) > every protected route > answers 401 for an expired token
+ 8. CAUGHT   login no longer opts out of the default deny
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs the admin role > refuses a reviewer with 403, returns nothing readable and writes no audit row
+ 9. CAUGHT   the health check no longer opts out of the default deny
+        first failing test: sign-in and tokens (real PostgreSQL) > keeps the health check public and answers it from the database
+10. CAUGHT   a reveal is no longer audited
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > a good reveal > writes exactly one REVEAL audit row with the trimmed reason, the actor and the call
+11. CAUGHT   an audit failure no longer stops the reveal
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the reveal and its audit row are one transaction > returns nothing readable when the audit insert fails, and leaves no REVEAL row
+12. CAUGHT   the status change is outside the audit transaction
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the reveal and its audit row are one transaction > rolls a status change back when its audit insert fails
+13. CAUGHT   a status change is no longer audited
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the reveal and its audit row are one transaction > rolls a status change back when its audit insert fails
+14. CAUGHT   opening a call is no longer audited
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the reveal and its audit row are one transaction > does not open a call when its audit insert fails
+15. CAUGHT   the reveal reason is no longer trimmed
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > answers 400 for a blank reason and writes nothing
+16. CAUGHT   the reveal reason may be short
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > answers 400 for an empty reason and writes nothing
+17. CAUGHT   the reveal reason may be very long
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > answers 400 for a reason over 300 characters and writes nothing
+18. CAUGHT   the status is not validated
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > status changes > lets a reviewer move a call and records from and to
+19. CAUGHT   the global validation pipe is not installed
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > answers 400 for no body and writes nothing
+20. CAUGHT   the problem details filter is not installed
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > reveal needs a real reason > names what is wrong in the problem detail
+21. CAUGHT   CORS allows every origin
+        first failing test: sign-in and tokens (real PostgreSQL) > allows the Angular origin through CORS and no other
+
+21 of 21 mutations caught by a real test failure in 103s
+
+----- part 2 -----
+baseline: running the unmutated suite (41 mutations in total, 20 in this run)
+  Tests:       137 passed, 137 total
+22. CAUGHT   a call id is not checked to be a UUID
+        first failing test: contract: the responses match the types the Angular client declares > reads the client types it checks against (a missing file would make every check vacuous)
+23. CAUGHT   a reveal response is cacheable
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > a good reveal > returns the original name and transcript, uncached
+24. CAUGHT   an opened call is cacheable
+        first failing test: reading calls: masked by default (real PostgreSQL) > shows the masked transcript on one call, for a reviewer and an admin alike, and never the original
+25. CAUGHT   the X-Frame-Options header is gone
+        first failing test: sign-in and tokens (real PostgreSQL) > sends the security headers and echoes a safe request id
+26. CAUGHT   an unexpected error shows its message
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the reveal and its audit row are one transaction > returns nothing readable when the audit insert fails, and leaves no REVEAL row
+27. CAUGHT   opening a call shows the original transcript
+        first failing test: reading calls: masked by default (real PostgreSQL) > shows the masked transcript on one call, for a reviewer and an admin alike, and never the original
+28. CAUGHT   ingest stores the unredacted transcript for display
+        first failing test: reading calls: masked by default (real PostgreSQL) > shows the masked transcript on one call, for a reviewer and an admin alike, and never the original
+29. CAUGHT   ingest stores the patient name unencrypted
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > a good reveal > returns the original name and transcript, uncached
+30. CAUGHT   phone numbers are not masked
+        first failing test: reading calls: masked by default (real PostgreSQL) > lists calls with no readable detail anywhere in the payload
+31. CAUGHT   social security numbers are not masked
+        first failing test: PHI redactor > masks a social security number
+32. CAUGHT   the login lockout is gone
+        first failing test: sign-in and tokens (real PostgreSQL) > locks an account after repeated failures, before the password is even checked
+33. CAUGHT   a wrong-password answer names the account
+        first failing test: sign-in and tokens (real PostgreSQL) > refuses a wrong password and an unknown account with the same message, and audits the failure
+34. CAUGHT   a failed sign-in is not audited
+        first failing test: sign-in and tokens (real PostgreSQL) > refuses a wrong password and an unknown account with the same message, and audits the failure
+35. CAUGHT   the webhook signature is not checked
+        first failing test: the signed ingest webhook (real PostgreSQL) > answers 401 for no signature and stores nothing
+36. CAUGHT   a signed payload is not validated
+        first failing test: the signed ingest webhook (real PostgreSQL) > answers 400 for a signed payload with a missing patient name
+37. CAUGHT   a stale webhook timestamp is accepted
+        first failing test: the signed ingest webhook (real PostgreSQL) > answers 401 for a stale timestamp (replay) and stores nothing
+38. CAUGHT   the webhook MAC does not bind the timestamp
+        first failing test: webhook signature > binds the timestamp into the MAC, so a captured signature cannot be re-dated
+39. CAUGHT   the encryption IV is not random
+        first failing test: field cipher (AES-256-GCM) > uses a fresh IV every time, so the same text never encrypts the same way twice
+40. CAUGHT   the call page size is not capped
+        first failing test: reading calls: masked by default (real PostgreSQL) > pages newest first and caps the page size at 50
+41. CAUGHT   the audit page size is not capped
+        first failing test: reveal, status change and the audit trail (real PostgreSQL) > the audit trail itself > pages, caps the size at 100 and refuses a size that is not a number
+
+20 of 20 mutations caught by a real test failure in 203s

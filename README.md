@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/Exalt24/clinic-call-console/actions/workflows/ci.yml/badge.svg)](https://github.com/Exalt24/clinic-call-console/actions/workflows/ci.yml)
 
-Voice-agent call review console: personal details masked by default, revealed only with a reason, every access audited.
+Voice-agent call review console: personal details masked by default, revealed only with a reason, every access audited. One Angular client, two interchangeable APIs for the same contract: Spring Boot, or NestJS on PostgreSQL.
 
-**Proof:** from a fresh clone on 2026-10-17, 72 Java tests and 126 Angular tests pass, and `scripts/mutation_check.py` broke 28 guards one at a time and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). CI runs the two test suites; the mutation check is not part of it.
+**Proof:** from a fresh clone on 2026-10-17, 72 Java tests and 126 Angular tests pass, and `scripts/mutation_check.py` broke 28 guards one at a time and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). The NestJS API adds 137 tests against a real PostgreSQL and its own mutation check, which broke 41 guards one at a time and caught all 41 ([`docs/test-runs/`](docs/test-runs/)). CI runs the Java, Angular and NestJS suites; both mutation checks are run by hand.
 
 ![The console through a masked call, a reveal that needs a reason, and the audit trail it leaves](docs/demo.gif)
 
@@ -66,6 +66,39 @@ python scripts/mutation_check.py           # breaks 28 guards one at a time; edi
 node web/tests/e2e.cjs <shots-dir>         # needs the API on :8080 and the web app on :4200
 ```
 
+## NestJS API
+
+`nest-api/` serves the same contract as the Spring Boot API from NestJS (TypeScript) with TypeORM on PostgreSQL, so the repo shows Angular, NestJS and PostgreSQL working together. The Spring Boot API stays as it was, and the Angular client runs against either one.
+
+**Built and tested against** a local PostgreSQL 16 container (and a PostgreSQL service in CI) and this repo's own Angular client, on seeded sample calls. It has been run in a real browser with the client's Playwright walkthrough, all 39 checks green against this API ([`docs/test-runs/nest-browser-check.txt`](docs/test-runs/nest-browser-check.txt)).
+
+![The audit trail in the Angular app, served by the NestJS API](docs/nest-api-browser.png)
+
+- **Same endpoints and payloads:** sign in, list calls with status and text filters, open one call masked, change its status, reveal with a required reason, read the audit trail, receive a signed call webhook, and a health check the login page reads.
+- **Masking on the server.** Names, phone numbers, birth dates, emails, record and insurance numbers and addresses are masked when a call arrives. The original text and the patient name are stored encrypted (AES-256-GCM, the same stored layout as the Spring API).
+- **Reveal and audit row in one transaction.** The reveal reads and the audit insert share one TypeORM transaction, so a failed audit insert returns nothing readable and leaves no row, and a status change rolls back with its audit row.
+- **Role guards that match the Spring API.** Every route needs a signed-in user unless it is marked public; reveal and the audit trail need the `ADMIN` role. Tokens are HS256 JWTs with the same `role` claim.
+- **Validation and errors.** DTOs validated with class-validator (a reveal reason of 10 to 300 characters, a known status, a UUID call id, whole-number paging), and one global exception filter that answers every failure as RFC 9457 problem details with no stack trace or SQL text.
+- **Migrations** create the same two tables, `call_record` and `audit_event`, as the Spring API's Flyway script.
+
+```
+cd nest-api && npm ci && npm run db:up     # PostgreSQL 16 in Docker on :55442
+npm run build && npm start                 # http://localhost:3100, 36 synthetic calls seeded
+cd ../web && npm run start:nest            # Angular on :4200 pointed at :3100 (npm start still uses the Spring API on :8080)
+cd ../nest-api && npm test                 # 137 tests; npm run db:down removes the container and its volume
+```
+
+The client picks its API from `config.json`: `ng serve` serves `web/public/config.json` (the Spring API, the default) and `--configuration nest` serves `web/nest-config/config.json` (the NestJS API).
+
+| Layer | What | Count |
+|---|---|---|
+| Unit | redactor, cipher, webhook signature, guards, error filter, lockout window, config | 55 |
+| End to end | supertest against the real app and PostgreSQL: masked by default, reveal needs a reason, exactly one audit row per reveal, rollback when the audit insert fails (a PostgreSQL trigger makes it fail), wrong role refused, no or forged or expired token refused, malformed input refused, signed webhook | 68 |
+| Contract | reads the Angular client's own `models.ts` with the TypeScript compiler and checks every response field, type and enum, plus that each endpoint the client source calls exists | 14 |
+| **Mutation check** | `nest-api/scripts/mutation_check.py` removes one guard at a time (global auth guard, role guard, reveal and audit role checks, audit write, transaction, reason rules, validation pipe, exception filter, CORS, masking, encryption, webhook signature and more) and needs a real test failure each time | 41 of 41 caught |
+
+Run outputs are kept in [`docs/test-runs/`](docs/test-runs/): the jest run, the mutation check and the browser walkthrough. One mutant, removing `transform: true` from the validation pipe, changes no response, so it is left out of the list.
+
 ## Run it
 
 ```
@@ -91,6 +124,7 @@ The default profile uses demo secrets so it runs after a fresh clone. The `prod`
 ```
 api/                       Spring Boot 4 (Java 21): calls, audit, auth, ingest, redaction, crypto, security, seed
   src/test/                72 tests; ApiSecurityTest and IngestApiTest call the real API as the wrong role
+nest-api/                  NestJS + TypeORM + PostgreSQL: the same contract (auth, calls, audit, ingest), migrations, tests, mutation check
 web/                       Angular 22: core (auth, interceptors, guards, services), shell, features (login, calls, audit), shared
   tests/e2e.cjs            Playwright walkthrough (39 checks)
 scripts/                   mutation_check.py, send_webhook.py

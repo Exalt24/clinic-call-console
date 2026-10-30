@@ -48,6 +48,41 @@ jobs:
       - name: Production build
         run: npx ng build
 
+  nest-api:
+    timeout-minutes: 30
+    name: NestJS API (Node 24, PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clinic
+          POSTGRES_PASSWORD: clinic
+          POSTGRES_DB: clinic_nest
+        ports:
+          - 55442:5432
+        options: >-
+          --health-cmd "pg_isready -U clinic -d clinic_nest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: nest-api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: nest-api/package-lock.json
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      # unit, end to end against the PostgreSQL service above, and the contract test that reads ../web/src/app/core/models.ts
+      - name: Tests
+        run: npm test
+
   image:
     timeout-minutes: 30
     name: Container image builds

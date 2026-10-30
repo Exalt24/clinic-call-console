@@ -1,0 +1,48 @@
+deep links
+  PASS a deep link is served by the app, not a 404
+  PASS and a signed-out visitor is sent to sign in, remembering where they were going
+login
+  PASS login page shows its heading
+  PASS submitting an empty form shows field errors and does not navigate
+  PASS a wrong password shows a plain message and stays on the page
+reviewer queue
+  PASS reviewer lands on the queue
+  PASS queue reports the total
+  PASS first page has 10 rows
+  PASS reviewer sees no Audit link in the sidebar
+  PASS queue shows no phone numbers or patient-style names
+  PASS the Resolved filter shows only resolved calls
+  PASS searching narrows the list
+  PASS a search with no hits shows an empty state with a way out
+reviewer detail
+  PASS the transcript shows masked tags
+  PASS the detail page contains no phone numbers, emails or SSNs
+  PASS a reviewer sees no Reveal button
+  PASS a reviewer is told only administrators can reveal
+  PASS Start review moves the call to In review
+  PASS and it can be moved back, leaving the data as it was found
+  PASS the deferred legend loads on demand
+  PASS a reviewer who types /audit is sent back to the queue
+admin reveal
+  PASS admin sees the Audit link
+  PASS focus moves into the reveal dialog
+  PASS submitting with no reason shows an error, keeps the dialog open and reveals nothing
+  PASS the page did not reload when the form was submitted
+  PASS a short reason is refused
+  PASS Escape closes the dialog without revealing
+  PASS focus returns to the Reveal button
+  PASS after a valid reason the transcript is unmasked
+  PASS the unmasked view is clearly marked
+  PASS Hide now masks the transcript again
+audit
+  PASS the audit trail lists the reveal
+  PASS the audit trail carries the reason
+  PASS the audit trail lists opened calls
+mobile 390
+  PASS phone shows cards, not the table
+  PASS no horizontal scroll on the phone queue
+  PASS every visible control on the phone is at least 44px tall
+  PASS no horizontal scroll on the phone detail page
+  PASS no console errors during the whole run
+
+39 passed, 0 failed

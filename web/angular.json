@@ -53,6 +53,12 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "nest": {
+              "assets": [
+                { "glob": "favicon.*", "input": "public" },
+                { "glob": "config.json", "input": "nest-config" }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -65,6 +71,9 @@
             },
             "development": {
               "buildTarget": "web:build:development"
+            },
+            "nest": {
+              "buildTarget": "web:build:development,nest"
             }
           },
           "defaultConfiguration": "development"

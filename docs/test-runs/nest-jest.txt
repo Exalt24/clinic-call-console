@@ -1,0 +1,6 @@
+[Nest] 27408  - 10/31/2026, 12:04:31 AM   ERROR [errors] unhandled Error
+Test Suites: 11 passed, 11 total
+Tests:       137 passed, 137 total
+Snapshots:   0 total
+Time:        9.658 s, estimated 10 s
+Ran all test suites in 2 projects.
