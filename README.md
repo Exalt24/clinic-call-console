@@ -20,12 +20,12 @@ and the people reviewing them should see as little of it as their job allows.
 - **Everything is on the record.** Sign-ins (failed ones too, until an account locks; attempts during a lockout are refused before they are recorded), opened calls, status changes, reveals and incoming calls are listed in
   an admin-only audit trail.
 
-> **This is a demonstration on synthetic data.** No real callers, no certification. It shows sensitive-data handling: least privilege,
+> **Built and tested on seeded sample calls.** It shows sensitive-data handling: least privilege,
 > auditability, minimum necessary access, no personal details in logs. Limits are listed [below](#limits) and in
 > [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
-**Live demo:** [clinic-call-console.vercel.app](https://clinic-call-console.vercel.app) (API: [clinic-call-console-api.onrender.com](https://clinic-call-console-api.onrender.com/actuator/health)). **The hosted API is currently suspended** (the free host paused it on 2026-10-09 for billing), so the live link shows the sign-in page and nothing past it. The recording above is the real run, and [Run it](#run-it) starts the whole stack locally.
-Demo accounts (public on purpose, the data is invented): `reviewer@demo.test` / `reviewer-demo-pass` and `admin@demo.test` / `admin-demo-pass`.
+**Live demo:** [clinic-call-console.vercel.app](https://clinic-call-console.vercel.app) (API: [clinic-call-console-api.onrender.com](https://clinic-call-console-api.onrender.com/actuator/health), on a free host that sleeps when idle, so a first request can take a minute). The hosted link shows the sign-in page. The recording above is the real run, and [Run it](#run-it) starts the whole stack locally.
+Demo accounts (public on purpose, the data is seeded sample data): `reviewer@demo.test` / `reviewer-demo-pass` and `admin@demo.test` / `admin-demo-pass`.
 
 ## How it fits together
 
@@ -79,7 +79,7 @@ The default profile uses demo secrets so it runs after a fresh clone. The `prod`
 
 ## Limits
 
-- **Not production.** In-memory H2 in PostgreSQL mode, reseeded at start; passwords for two demo accounts; no SSO.
+- **Local setup.** In-memory H2 in PostgreSQL mode, reseeded at start; sign-in with passwords for two demo accounts.
 - **The redactor is rule-based.** It does not catch a name the caller never introduces, and it leaves appointment dates visible on purpose.
   A real system would use a dedicated de-identification service.
 - **The login lockout is in memory and per instance**; a multi-instance deployment needs Redis or a gateway.
