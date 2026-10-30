@@ -1,3 +1,4 @@
+# LIFESPAN: permanent
 """Mutation check for the NestJS API: break one guard at a time and prove the test suite notices.
 
 A test that stays green when its guard is deleted proves nothing. For each mutation below this script
