@@ -41,5 +41,26 @@
     "ts-jest": "^29.4.15",
     "ts-node": "^10.9.2",
     "typescript": "~6.0.2"
+  },
+  "overrides": {
+    "@nestjs/platform-express": {
+      "multer": "2.5.0"
+    },
+    "@jest/reporters": {
+      "glob": "14.0.4"
+    },
+    "jest-config": {
+      "glob": "14.0.4"
+    },
+    "jest-runtime": {
+      "glob": "14.0.4"
+    },
+    "test-exclude": {
+      "glob": "14.0.4",
+      "minimatch": "11.0.5"
+    },
+    "typeorm": {
+      "glob": "14.0.4"
+    }
   }
 }
