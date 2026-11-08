@@ -2,23 +2,24 @@
 
 [![CI](https://github.com/Exalt24/clinic-call-console/actions/workflows/ci.yml/badge.svg)](https://github.com/Exalt24/clinic-call-console/actions/workflows/ci.yml)
 
-Voice-agent call review console: personal details masked by default, revealed only with a reason, every access audited. One Angular client, two interchangeable APIs for the same contract: Spring Boot, or NestJS on PostgreSQL.
+Voice-agent call review console: personal details masked by default, revealed only with a reason, every access audited.
 
-**Proof:** from a fresh clone on 2026-10-17, 72 Java tests and 126 Angular tests pass, and `scripts/mutation_check.py` broke 28 guards one at a time and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). The NestJS API adds 137 tests against a real PostgreSQL and its own mutation check, which broke 41 guards one at a time and caught all 41 ([`docs/test-runs/`](docs/test-runs/)). CI runs the Java, Angular and NestJS suites; both mutation checks are run by hand.
+One Angular client talks to two interchangeable APIs for the same contract: Spring Boot, or NestJS on PostgreSQL.
+
+**Proof:** from a fresh clone on 2026-10-17, 72 Java tests and 126 Angular tests pass. `scripts/mutation_check.py` broke 28 guards one at a time, and every one was caught by a real test failure (the reveal no longer admin-only, the audit row not written, the signature not checked, and 25 more). The NestJS API adds 137 tests against a real PostgreSQL and its own mutation check. That check broke 41 guards one at a time and caught all 41 ([`docs/test-runs/`](docs/test-runs/)). CI runs the Java, Angular and NestJS suites. Both mutation checks are run by hand.
 
 ![The console through a masked call, a reveal that needs a reason, and the audit trail it leaves](docs/demo.gif)
 
 *A reviewer sees masked calls and cannot reveal anything. An administrator must give a reason to reveal, and every sign-in, view and reveal lands in the audit trail. Full-quality clip: [`docs/demo.mp4`](docs/demo.mp4).*
 
-A review console for the calls a **voice assistant** takes. The calls are the interesting part: they are full of personal details,
+A review console for the calls a **voice assistant** takes. The calls are the interesting part. They are full of personal details,
 and the people reviewing them should see as little of it as their job allows.
 
 - **Masked by default.** Names, phone numbers, birth dates, emails, record and insurance numbers and addresses are masked when a call is
-  received, and every screen shows only the masked copy.
-- **Reveal on purpose.** Only an administrator can reveal a call, must give a reason, and the reveal and the reason are written to the audit
+  received. Every screen shows only the masked copy.
+- **Reveal on purpose.** Only an administrator can reveal a call, and must give a reason. The reveal and the reason are written to the audit
   trail in the same database transaction. The revealed text hides itself again after 60 seconds.
-- **Everything is on the record.** Sign-ins (failed ones too, until an account locks; attempts during a lockout are refused before they are recorded), opened calls, status changes, reveals and incoming calls are listed in
-  an admin-only audit trail.
+- **Everything is on the record.** An admin-only audit trail lists sign-ins, opened calls, status changes, reveals and incoming calls. Failed sign-ins are listed too, until an account locks. Attempts during a lockout are refused before they are recorded.
 
 > **Built and tested on seeded sample calls.** It shows sensitive-data handling: least privilege,
 > auditability, minimum necessary access, no personal details in logs. Limits are listed [below](#limits) and in
@@ -44,7 +45,7 @@ flowchart LR
 
 ## What is built
 
-The sensitive columns are encrypted with AES-256-GCM, the audit row is written in the same transaction as the reveal, the ingest webhook is HMAC-signed with a replay window and idempotency, and the Angular app is keyboard operable with live regions for status changes and 44 px touch targets. The design decisions and what each one costs are in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+The sensitive columns are encrypted with AES-256-GCM. The audit row is written in the same transaction as the reveal. The ingest webhook is HMAC-signed, with a replay window and idempotency. The Angular app is keyboard operable, with live regions for status changes and 44 px touch targets. The design decisions and what each one costs are in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## How it is tested
 
@@ -55,8 +56,8 @@ The sensitive columns are encrypted with AES-256-GCM, the audit row is written i
 | Browser end to end | a real Chromium walks login, filtering, masked reading, the reveal dialog, the audit trail and the phone layout at 390 px | 39 checks (not re-run on 2026-10-17) |
 | **Mutation check** | `scripts/mutation_check.py` breaks one guard at a time (reveal no longer admin-only, audit not written, signature not checked, token sent to any origin, ...) and requires a genuine test failure each time | 28 of 28 caught |
 
-The mutation check found two weak tests while this was being built (a cache-header assertion that Spring Security's default satisfied on its
-own, and a mutant that did not change behaviour), and an end-to-end run found a form that submitted natively and reloaded the page. Each is now
+The mutation check found two weak tests while this was being built. One was a cache-header assertion that Spring Security's default satisfied on its
+own. The other was a mutant that did not change behaviour. An end-to-end run also found a form that submitted natively and reloaded the page. Each is now
 pinned by a test.
 
 ```
@@ -68,17 +69,17 @@ node web/tests/e2e.cjs <shots-dir>         # needs the API on :8080 and the web 
 
 ## NestJS API
 
-`nest-api/` serves the same contract as the Spring Boot API from NestJS (TypeScript) with TypeORM on PostgreSQL, so the repo shows Angular, NestJS and PostgreSQL working together. The Spring Boot API stays as it was, and the Angular client runs against either one.
+`nest-api/` serves the same contract as the Spring Boot API from NestJS (TypeScript) with TypeORM on PostgreSQL. The repo therefore shows Angular, NestJS and PostgreSQL working together. The Spring Boot API stays as it was, and the Angular client runs against either one.
 
-**Built and tested against** a local PostgreSQL 16 container (and a PostgreSQL service in CI) and this repo's own Angular client, on seeded sample calls. It has been run in a real browser with the client's Playwright walkthrough, all 39 checks green against this API ([`docs/test-runs/nest-browser-check.txt`](docs/test-runs/nest-browser-check.txt)).
+**Built and tested against** a local PostgreSQL 16 container (and a PostgreSQL service in CI) and this repo's own Angular client, on seeded sample calls. It has been run in a real browser with the client's Playwright walkthrough. All 39 checks were green against this API ([`docs/test-runs/nest-browser-check.txt`](docs/test-runs/nest-browser-check.txt)).
 
 ![The audit trail in the Angular app, served by the NestJS API](docs/nest-api-browser.png)
 
-- **Same endpoints and payloads:** sign in, list calls with status and text filters, open one call masked, change its status, reveal with a required reason, read the audit trail, receive a signed call webhook, and a health check the login page reads.
+- **Same endpoints and payloads:** sign in, list calls with status and text filters, open one call masked, change its status, reveal with a required reason, and read the audit trail. It also receives a signed call webhook and serves a health check the login page reads.
 - **Masking on the server.** Names, phone numbers, birth dates, emails, record and insurance numbers and addresses are masked when a call arrives. The original text and the patient name are stored encrypted (AES-256-GCM, the same stored layout as the Spring API).
-- **Reveal and audit row in one transaction.** The reveal reads and the audit insert share one TypeORM transaction, so a failed audit insert returns nothing readable and leaves no row, and a status change rolls back with its audit row.
-- **Role guards that match the Spring API.** Every route needs a signed-in user unless it is marked public; reveal and the audit trail need the `ADMIN` role. Tokens are HS256 JWTs with the same `role` claim.
-- **Validation and errors.** DTOs validated with class-validator (a reveal reason of 10 to 300 characters, a known status, a UUID call id, whole-number paging), and one global exception filter that answers every failure as RFC 9457 problem details with no stack trace or SQL text.
+- **Reveal and audit row in one transaction.** The reveal reads and the audit insert share one TypeORM transaction. A failed audit insert returns nothing readable and leaves no row, and a status change rolls back with its audit row.
+- **Role guards that match the Spring API.** Every route needs a signed-in user unless it is marked public. Reveal and the audit trail need the `ADMIN` role. Tokens are HS256 JWTs with the same `role` claim.
+- **Validation and errors.** DTOs are validated with class-validator (a reveal reason of 10 to 300 characters, a known status, a UUID call id, whole-number paging). One global exception filter answers every failure as RFC 9457 problem details, with no stack trace or SQL text.
 - **Migrations** create the same two tables, `call_record` and `audit_event`, as the Spring API's Flyway script.
 
 ```
@@ -88,7 +89,7 @@ cd ../web && npm run start:nest            # Angular on :4200 pointed at :3100 (
 cd ../nest-api && npm test                 # 137 tests; npm run db:down removes the container and its volume
 ```
 
-The client picks its API from `config.json`: `ng serve` serves `web/public/config.json` (the Spring API, the default) and `--configuration nest` serves `web/nest-config/config.json` (the NestJS API).
+The client picks its API from `config.json`. `ng serve` serves `web/public/config.json` (the Spring API, the default). `--configuration nest` serves `web/nest-config/config.json` (the NestJS API).
 
 | Layer | What | Count |
 |---|---|---|
@@ -107,16 +108,16 @@ cd web && npm ci && npx ng serve           # http://localhost:4200
 python scripts/send_webhook.py             # sends one correctly signed call, then a forged one and an unsigned one
 ```
 
-The default profile uses demo secrets so it runs after a fresh clone. The `prod` profile (`SPRING_PROFILES_ACTIVE=prod`) has **no defaults** for
-`JWT_SECRET`, `FIELD_KEY`, `WEBHOOK_SECRET`, `CORS_ORIGINS` and the demo passwords, so a missing variable stops the boot.
+The default profile uses demo secrets, so it runs after a fresh clone. The `prod` profile (`SPRING_PROFILES_ACTIVE=prod`) has **no defaults** for
+`JWT_SECRET`, `FIELD_KEY`, `WEBHOOK_SECRET`, `CORS_ORIGINS` and the demo passwords. A missing variable stops the boot.
 
 ## Limits
 
-- **Local setup.** In-memory H2 in PostgreSQL mode, reseeded at start; sign-in with passwords for two demo accounts.
+- **Local setup.** The database is in-memory H2 in PostgreSQL mode, reseeded at start. Sign-in uses passwords for two demo accounts.
 - **The redactor is rule-based.** It does not catch a name the caller never introduces, and it leaves appointment dates visible on purpose.
   A real system would use a dedicated de-identification service.
-- **The login lockout is in memory and per instance**; a multi-instance deployment needs Redis or a gateway.
-- **The token is in `sessionStorage`**; a production build would use an httpOnly cookie from a backend-for-frontend (trade-off in `docs/DECISIONS.md`).
+- **The login lockout is in memory and per instance.** A multi-instance deployment needs Redis or a gateway.
+- **The token is in `sessionStorage`.** A production build would use an httpOnly cookie from a backend-for-frontend (trade-off in `docs/DECISIONS.md`).
 - **No real-time push.** The queue loads on demand.
 
 ## Layout
