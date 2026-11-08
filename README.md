@@ -55,7 +55,7 @@ The sensitive columns are encrypted with AES-256-GCM. The audit row is written i
 
 | Layer | What | Count |
 |---|---|---|
-| Java unit and integration | redaction rules, encryption, webhook signature, lockout, and the whole API called with real tokens (wrong role, no token, forged token, expired token, missing reason, bad signature, replay) | 71 |
+| Java unit and integration | redaction rules, encryption, webhook signature, lockout, and the whole API called with real tokens (wrong role, no token, forged token, expired token, missing reason, bad signature, replay) | 72 |
 | Angular unit | guards, interceptors, services, every page, the reveal dialog, the route resolver | 126 |
 | Browser end to end | a real Chromium walks login, filtering, masked reading, the reveal dialog, the audit trail and the phone layout at 390 px | 39 checks (not re-run on 2026-10-17) |
 | **Mutation check** | `scripts/mutation_check.py` breaks one guard at a time (reveal no longer admin-only, audit not written, signature not checked, token sent to any origin, ...) and requires a genuine test failure each time | 28 of 28 caught |
